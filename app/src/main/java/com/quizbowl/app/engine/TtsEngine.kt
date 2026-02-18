@@ -143,17 +143,18 @@ class TtsEngine(context: Context) {
     /** Resume (re-speak from current word). */
     fun resume() {
         if (!_paused.value) return
-        val remaining = words.drop(currentWordIndex.coerceAtLeast(0))
+        val startIdx = currentWordIndex.coerceAtLeast(0)
+        val remaining = words.drop(startIdx)
         if (remaining.isEmpty()) return
         _paused.value = false
         _speaking.value = true
 
-        // Rebuild char map for the remaining words
-        val fullOffset = words.take(currentWordIndex.coerceAtLeast(0)).sumOf { it.length + 1 }
+        // Rebuild char map using LOCAL offsets (0-based within spoken text).
+        // onRangeStart fires with offsets from 0, not from the full-text position.
         val map = mutableListOf<Pair<Int, Int>>()
         var charPos = 0
         for ((i, word) in remaining.withIndex()) {
-            map.add((fullOffset + charPos) to (currentWordIndex + i))
+            map.add(charPos to (startIdx + i))
             charPos += word.length + 1
         }
         charToWord = map

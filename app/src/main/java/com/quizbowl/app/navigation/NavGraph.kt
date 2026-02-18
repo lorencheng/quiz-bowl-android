@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.quizbowl.app.ui.home.HomeScreen
+import com.quizbowl.app.ui.tossup.TossupScreen
 
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
@@ -25,13 +26,13 @@ fun NavGraph() {
             HomeScreen(navController = navController)
         }
         composable(Screen.TossupPractice.route) {
-            // TODO: TossupScreen(navController = navController)
+            TossupScreen(navController = navController)
         }
         composable(Screen.BonusPractice.route) {
-            // TODO: BonusScreen(navController = navController)
+            // Deferred — HomeScreen shows "Coming soon" toast instead of navigating here
         }
         composable(Screen.Multiplayer.route) {
-            // TODO: MultiplayerScreen(navController = navController)
+            // Deferred — HomeScreen shows "Coming soon" toast instead of navigating here
         }
     }
 }
