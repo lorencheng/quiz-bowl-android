@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal XML theme — actual theming is done in Compose via ui/theme/Theme.kt -->
+<resources>
+    <style name="Theme.QuizBowlAndroid" parent="android:Theme.Material.NoActionBar" />
+</resources>
