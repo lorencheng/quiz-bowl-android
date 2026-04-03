@@ -1,14 +1,10 @@
 package com.quizbowl.app.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.MaterialTheme
 import com.quizbowl.app.ui.theme.qbColors
 import com.quizbowl.app.util.TossupScore
 
@@ -27,47 +22,53 @@ fun ScoreBoard(
 ) {
     val qbColors = MaterialTheme.qbColors
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = qbColors.surface),
-        border = BorderStroke(1.dp, qbColors.border),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Score — prominent, amber
+        Text(
+            text = "${score.total} pts",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = qbColors.accentAmber,
+        )
+
+        // Spacer pushes the rest to the right
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ScoreItem(label = "Score", value = score.total.toString(), highlight = true)
-            ScoreItem(label = "Correct", value = score.correct.toString())
-            ScoreItem(label = "Negs", value = score.neg.toString())
-            ScoreItem(label = "Questions", value = score.questions.toString())
+            ScorePill(label = "✓", value = score.correct.toString(), color = qbColors.green)
+            Text("  ", fontSize = 12.sp)
+            ScorePill(label = "✗", value = score.neg.toString(), color = qbColors.red)
+            Text("  ", fontSize = 12.sp)
+            ScorePill(label = "Q", value = score.questions.toString(), color = qbColors.textMuted)
         }
     }
 }
 
 @Composable
-private fun ScoreItem(
-    label: String,
-    value: String,
-    highlight: Boolean = false,
-) {
-    val qbColors = MaterialTheme.qbColors
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun ScorePill(label: String, value: String, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(
-            text = value,
-            fontSize = if (highlight) 20.sp else 16.sp,
+            text = label,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = if (highlight) qbColors.primary else MaterialTheme.colorScheme.onSurface,
+            color = color,
         )
         Text(
-            text = label,
-            fontSize = 11.sp,
-            color = qbColors.textMuted,
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = color,
         )
     }
 }

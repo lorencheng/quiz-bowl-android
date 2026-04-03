@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +51,7 @@ fun QuestionText(
                         SpanStyle(
                             background = qbColors.primaryGlow,
                             color = qbColors.primary,
+                            fontWeight = FontWeight.Bold,
                         )
                     ) {
                         append(word)
@@ -64,8 +66,8 @@ fun QuestionText(
 
     Text(
         text = annotated,
-        fontSize = 16.sp,
-        lineHeight = 26.sp,
+        fontSize = 18.sp,
+        lineHeight = 30.sp,
         textAlign = TextAlign.Start,
         modifier = modifier,
     )

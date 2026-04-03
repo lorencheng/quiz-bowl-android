@@ -98,9 +98,10 @@ fun SettingsPanel(
     voices: List<Voice>,
     onSettingsChange: (TossupSettings) -> Unit,
     modifier: Modifier = Modifier,
+    initiallyExpanded: Boolean = false,
 ) {
     val qbColors = MaterialTheme.qbColors
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(initiallyExpanded) }
 
     // Local slider state — updates instantly on drag, persists only on release
     var localRate by remember(settings.rate) { mutableFloatStateOf(settings.rate) }
