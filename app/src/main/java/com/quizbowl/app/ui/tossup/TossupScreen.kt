@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -139,14 +140,8 @@ fun TossupScreen(navController: NavController) {
         }
     }
 
-    // ── Auto-focus answer field on BUZZING ────────────────────────────────────
+    // focusRequester kept for manual tap-to-type; keyboard no longer auto-raises on Buzz
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(phase) {
-        if (phase == TossupPhase.BUZZING) {
-            delay(150)
-            try { focusRequester.requestFocus() } catch (_: Exception) { }
-        }
-    }
 
     // ── Auto-scroll question to bottom ────────────────────────────────────────
     val questionScrollState = rememberScrollState()
@@ -183,7 +178,8 @@ fun TossupScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .imePadding(),
         ) {
             Column(
                 modifier = Modifier
