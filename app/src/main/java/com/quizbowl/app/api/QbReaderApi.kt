@@ -2,7 +2,7 @@ package com.quizbowl.app.api
 
 import com.quizbowl.app.api.models.BonusResponse
 import com.quizbowl.app.api.models.CheckAnswerResult
-import com.quizbowl.app.api.models.RoomInfo
+import com.quizbowl.app.api.models.RoomListResponse
 import com.quizbowl.app.api.models.TossupResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -34,5 +34,5 @@ interface QbReaderApi {
     ): CheckAnswerResult
 
     @GET("multiplayer/room-list")
-    suspend fun roomList(): List<RoomInfo>
+    suspend fun roomList(): RoomListResponse
 }

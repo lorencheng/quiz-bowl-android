@@ -43,6 +43,10 @@ data class BonusResponse(
     @SerializedName("bonuses") val bonuses: List<Bonus>,
 )
 
+data class RoomListResponse(
+    @SerializedName("roomList") val roomList: List<RoomInfo>,
+)
+
 data class RoomInfo(
     @SerializedName("name") val name: String?,
     @SerializedName("roomName") val roomName: String?,

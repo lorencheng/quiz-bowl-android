@@ -1,6 +1,5 @@
 package com.quizbowl.app.ui.home
 
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,7 +23,6 @@ import com.quizbowl.app.ui.theme.qbColors
 @Composable
 fun HomeScreen(navController: NavController) {
     val colors = MaterialTheme.qbColors
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -57,17 +54,13 @@ fun HomeScreen(navController: NavController) {
             title = "Bonus Practice",
             subtitle = "Practice bonuses with questions read aloud",
             accentColor = AccentRose,
-            onClick = {
-                Toast.makeText(context, "Bonus Practice coming soon!", Toast.LENGTH_SHORT).show()
-            },
+            onClick = { navController.navigate(Screen.BonusPractice.route) },
         )
         NavCard(
             title = "Multiplayer",
             subtitle = "Join existing qbreader rooms",
             accentColor = AccentAmber,
-            onClick = {
-                Toast.makeText(context, "Multiplayer coming soon!", Toast.LENGTH_SHORT).show()
-            },
+            onClick = { navController.navigate(Screen.Multiplayer.route) },
         )
     }
 }

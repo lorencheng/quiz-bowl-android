@@ -23,6 +23,7 @@ data class BonusSettings(
     val voiceName: String? = null,
     val categories: List<String> = emptyList(),
     val difficulties: List<Int> = emptyList(),
+    val answerTimer: Float = 5f,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -39,6 +40,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_BONUS_VOICE = stringPreferencesKey("bonus_voice")
         private val KEY_BONUS_CATEGORIES = stringPreferencesKey("bonus_categories")
         private val KEY_BONUS_DIFFICULTIES = stringPreferencesKey("bonus_difficulties")
+        private val KEY_BONUS_ANSWER_TIMER = floatPreferencesKey("bonus_answer_timer")
     }
 
     val username: Flow<String> = context.dataStore.data.map { prefs ->
@@ -62,6 +64,7 @@ class SettingsRepository(private val context: Context) {
             voiceName = prefs[KEY_BONUS_VOICE],
             categories = prefs[KEY_BONUS_CATEGORIES]?.split(",")?.filter { it.isNotEmpty() } ?: emptyList(),
             difficulties = prefs[KEY_BONUS_DIFFICULTIES]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList(),
+            answerTimer = prefs[KEY_BONUS_ANSWER_TIMER] ?: 5f,
         )
     }
 
@@ -86,6 +89,7 @@ class SettingsRepository(private val context: Context) {
             if (s.voiceName != null) prefs[KEY_BONUS_VOICE] = s.voiceName else prefs.remove(KEY_BONUS_VOICE)
             prefs[KEY_BONUS_CATEGORIES] = s.categories.joinToString(",")
             prefs[KEY_BONUS_DIFFICULTIES] = s.difficulties.joinToString(",")
+            prefs[KEY_BONUS_ANSWER_TIMER] = s.answerTimer
         }
     }
 }

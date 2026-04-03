@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quizbowl.app.api.QbReaderService
+import com.quizbowl.app.data.BonusSettings
 import com.quizbowl.app.data.TossupSettings
 import com.quizbowl.app.ui.theme.qbColors
 import java.util.Locale
@@ -256,6 +257,175 @@ fun SettingsPanel(
                     }
 
                     // ── Difficulties ──────────────────────────────────────────
+                    SectionLabel(
+                        "Difficulties${if (settings.difficulties.isEmpty()) " (all)" else " (${settings.difficulties.size})"}"
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        DIFF_CHIP_LABELS.forEach { (value, label) ->
+                            val selected = value in settings.difficulties
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    val next = if (selected) settings.difficulties.filter { it != value }
+                                               else settings.difficulties + value
+                                    onSettingsChange(settings.copy(difficulties = next))
+                                },
+                                label = { Text(label, fontSize = 12.sp) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun BonusSettingsPanel(
+    settings: BonusSettings,
+    voices: List<Voice>,
+    onSettingsChange: (BonusSettings) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val qbColors = MaterialTheme.qbColors
+    var expanded by remember { mutableStateOf(false) }
+
+    var localRate by remember(settings.rate) { mutableFloatStateOf(settings.rate) }
+    var localAnswerTimer by remember(settings.answerTimer) { mutableFloatStateOf(settings.answerTimer) }
+
+    val englishVoices = remember(voices) {
+        voices.filter { it.locale.language.startsWith("en") }
+    }
+    val voiceDisplayNames = remember(englishVoices) {
+        buildVoiceDisplayNames(englishVoices)
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = qbColors.surface),
+        border = BorderStroke(1.dp, qbColors.border),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Settings", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    fontSize = 11.sp,
+                    color = qbColors.textMuted,
+                )
+            }
+
+            if (expanded) {
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    if (englishVoices.isNotEmpty()) {
+                        val currentDisplay = voiceDisplayNames[
+                            englishVoices.find { it.name == settings.voiceName }
+                        ] ?: "Default"
+                        SectionLabel("Voice")
+                        var voiceMenuOpen by remember { mutableStateOf(false) }
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedButton(
+                                onClick = { voiceMenuOpen = !voiceMenuOpen },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = currentDisplay,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 13.sp,
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = voiceMenuOpen,
+                                onDismissRequest = { voiceMenuOpen = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Default") },
+                                    onClick = {
+                                        onSettingsChange(settings.copy(voiceName = null))
+                                        voiceMenuOpen = false
+                                    },
+                                )
+                                englishVoices.forEach { voice ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                voiceDisplayNames[voice] ?: voice.name,
+                                                fontSize = 13.sp,
+                                            )
+                                        },
+                                        onClick = {
+                                            onSettingsChange(settings.copy(voiceName = voice.name))
+                                            voiceMenuOpen = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    CompactSlider(
+                        label = "Speed",
+                        valueText = "${"%.1f".format(localRate)}×",
+                        value = localRate,
+                        onValueChange = { localRate = it },
+                        onValueChangeFinished = { onSettingsChange(settings.copy(rate = localRate)) },
+                        valueRange = 0.5f..2.0f,
+                        steps = 14,
+                    )
+
+                    CompactSlider(
+                        label = "Answer timer",
+                        valueText = if (localAnswerTimer == 0f) "Off" else "${"%.1f".format(localAnswerTimer)}s",
+                        value = localAnswerTimer,
+                        onValueChange = { localAnswerTimer = it },
+                        onValueChangeFinished = { onSettingsChange(settings.copy(answerTimer = localAnswerTimer)) },
+                        valueRange = 0f..15f,
+                        steps = 29,
+                    )
+
+                    SectionLabel(
+                        "Categories${if (settings.categories.isEmpty()) " (all)" else " (${settings.categories.size})"}"
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        QbReaderService.categories.forEach { cat ->
+                            val selected = cat in settings.categories
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    val next = if (selected) settings.categories.filter { it != cat }
+                                               else settings.categories + cat
+                                    onSettingsChange(settings.copy(categories = next))
+                                },
+                                label = { Text(cat, fontSize = 12.sp) },
+                            )
+                        }
+                    }
+
                     SectionLabel(
                         "Difficulties${if (settings.difficulties.isEmpty()) " (all)" else " (${settings.difficulties.size})"}"
                     )

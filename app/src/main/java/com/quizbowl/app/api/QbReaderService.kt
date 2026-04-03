@@ -91,5 +91,5 @@ object QbReaderService {
             givenAnswer = normalizeAnswer(givenAnswer),
         )
 
-    suspend fun getRoomList(): List<RoomInfo> = api.roomList()
+    suspend fun getRoomList(): List<RoomInfo> = api.roomList().roomList
 }
