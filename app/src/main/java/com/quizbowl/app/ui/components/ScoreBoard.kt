@@ -1,6 +1,7 @@
 package com.quizbowl.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,50 +26,58 @@ fun ScoreBoard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Score — prominent, amber
-        Text(
-            text = "${score.total} pts",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = qbColors.accentAmber,
-        )
-
-        // Spacer pushes the rest to the right
+        // Score — the hero number
         Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = score.total.toString(),
+                fontSize = 30.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = qbColors.accentAmber,
+                lineHeight = 30.sp,
+            )
+            Text(
+                text = "pts",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = qbColors.accentAmber.copy(alpha = 0.7f),
+                modifier = Modifier.padding(bottom = 3.dp),
+            )
+        }
+
+        // Stats — right side
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ScorePill(label = "✓", value = score.correct.toString(), color = qbColors.green)
-            Text("  ", fontSize = 12.sp)
-            ScorePill(label = "✗", value = score.neg.toString(), color = qbColors.red)
-            Text("  ", fontSize = 12.sp)
-            ScorePill(label = "Q", value = score.questions.toString(), color = qbColors.textMuted)
+            StatColumn(value = score.correct.toString(), label = "correct", color = qbColors.green)
+            StatColumn(value = score.neg.toString(), label = "neg", color = qbColors.red)
+            StatColumn(value = score.questions.toString(), label = "played", color = qbColors.textMuted)
         }
     }
 }
 
 @Composable
-private fun ScorePill(label: String, value: String, color: androidx.compose.ui.graphics.Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
+private fun StatColumn(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = label,
-            fontSize = 12.sp,
+            text = value,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = color,
         )
         Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = color,
+            text = label,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            color = color.copy(alpha = 0.6f),
+            letterSpacing = 0.5.sp,
         )
     }
 }

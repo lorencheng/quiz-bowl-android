@@ -204,6 +204,136 @@ On timeout → treat as incorrect (0 pts), auto-advance to PART_RESULT
 **New files:** `ui/multiplayer/LobbyScreen.kt`, `ui/multiplayer/MultiplayerScreen.kt`,
 `ui/multiplayer/MultiplayerViewModel.kt`
 
+## Design System
+
+**Aesthetic:** Dark-first game show UI. Vivid but controlled — color is used for meaning, not decoration.
+The app targets middle/high school students and should feel like a competitive game, not a productivity tool.
+
+### Screen Layout Pattern (apply to every screen)
+- No `TopAppBar`. Use a custom `GameHeader` row at the top of the screen's `Column`.
+- `Scaffold(containerColor = qbColors.bg)` with no `topBar` — provides correct inset padding.
+- Settings moved out of the screen body into a `ModalBottomSheet` (gear icon in header → sheet opens pre-expanded).
+- `SettingsPanel` accepts `initiallyExpanded = true` when hosted in a bottom sheet.
+- Inner content: `Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp))`.
+- Spacing baseline is **8dp**. Use `Spacer(Modifier.height(8.dp))` or `Arrangement.spacedBy(8.dp/12.dp/16.dp)` — not arbitrary values.
+
+### GameHeader Pattern
+```kotlin
+Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), SpaceBetween, CenterVertically) {
+    IconButton { Icon(Icons.AutoMirrored.Filled.ArrowBack, tint = qbColors.textMuted, size = 22.dp) }
+    Text("SCREEN NAME", 12sp, ExtraBold, letterSpacing = 3.sp, color = qbColors.primary)
+    IconButton { Icon(Icons.Filled.Settings, tint = qbColors.textMuted, size = 20.dp) }
+}
+```
+- Always use `Icon()` + real `Icons.*` vectors. Never Unicode characters or emoji as navigation controls.
+- Title: short ALL-CAPS name, 12sp, `letterSpacing = 3.sp`, `qbColors.primary`.
+
+### Score / Stats HUD Pattern
+- Score hero: **30sp ExtraBold `accentAmber`** with a small `"pts"` label at `13sp` at the bottom of the number.
+- Secondary stats (correct, neg, played) aligned right: 16sp bold value + 9sp muted label below, `Arrangement.spacedBy(16.dp)`.
+- No borders, no cards. Just a `Row(SpaceBetween)` on `qbColors.bg`. Flat, scannable in peripheral vision.
+- Labels use plain words ("correct", "neg", "played"), NOT emoji checkmarks (render inconsistently across OEMs).
+
+### Question / Content Card Pattern
+- `Card(shape = RoundedCornerShape(20.dp), colors = containerColor = qbColors.surface, elevation = 0.dp)`
+- **No gradient border.** The `surface` vs `bg` color contrast is sufficient separation.
+- Internal padding: `20.dp` all sides.
+- Category metadata: one colored pill (dot + "Category · Subcategory") + separate muted `"D5"` difficulty badge.
+  - Pill: `RoundedCornerShape(6.dp)`, `background = accentColor.copy(alpha = 0.15f)`, no border.
+  - Dot: 6dp `CircleShape` filled with accentColor.
+  - Text: 11sp SemiBold in accentColor.
+  - Difficulty: 11sp Bold, `qbColors.textMuted`, `surface2` background, same corner shape.
+- Category → accent color map: Science=teal, History/Religion/Mythology=amber, Literature/Fine Arts=rose, else=primary.
+
+### Primary Action Button (GradientButton)
+- `Box + clip(RoundedCornerShape(14.dp)) + background(Brush) + clickable(interactionSource, ripple(White))`
+- **Always include ripple** using `MutableInteractionSource` + `indication = ripple(color = Color.White, bounded = true)`.
+- Height: 54–58dp. Text: ExtraBold, 16–17sp, `letterSpacing = 1–2.sp`.
+- Gradient: `Brush.horizontalGradient(listOf(qbColors.primary, qbColors.accentTeal))`.
+- Disabled: `Brush.horizontalGradient(listOf(Gray.copy(0.35f), Gray.copy(0.35f)))`, text at 0.4 alpha.
+- **De-prioritized actions** (e.g. "NEXT" after result, secondary confirms): use `surface2` flat gradient + `onSurface` text color. This creates hierarchy — not every button should shout.
+
+### Buzz Button
+- Height 72dp, `RoundedCornerShape(20.dp)`, gradient teal→primary.
+- Text: `"BUZZ"`, 22sp ExtraBold, `letterSpacing = 3.sp`, Color.White. **No emoji prefix.**
+- Pulse animation when active (TTS done or buzz timer running):
+  ```kotlin
+  val pulseScale by infiniteTransition.animateFloat(1f, 1.03f,
+      infiniteRepeatable(tween(500, FastOutSlowInEasing), RepeatMode.Reverse))
+  Modifier.scale(if (shouldPulse) pulseScale else 1f)
+  ```
+- Ripple: `ripple(color = Color.White)`.
+
+### Pause / Resume
+- **Never full-width.** Always a small `IconButton(52.dp, CircleShape, background = surface2)`.
+- Icons: `Icons.Filled.Pause` / `Icons.Filled.PlayArrow`, tint = `textMuted`, size = 22dp.
+- Sits in a `Row` beside the primary action button (not below it).
+
+### Countdown Timer (CountdownTimer composable)
+```
+        4.2          ← 32sp ExtraBold, centered, color = timerColor
+▓▓▓▓▓▓▓░░░░        ← 6dp LinearProgressIndicator, rounded, same color
+```
+- Color animates amber→red via `animateColorAsState(tween(300))` when `seconds <= warningThreshold`.
+- Bar: `height = 6.dp`, `clip(RoundedCornerShape(3.dp))`, `trackColor = qbColors.surface2`.
+- The big number is the primary read; the bar is context. Do not shrink the number.
+
+### Mic Card (MicCard composable)
+- Static `background = qbColors.surface2` (never changes).
+- Border animates: `animateColorAsState` (border/primary) + `animateDpAsState` (1dp→2dp) on listening state.
+- Icon: real `Icon(Icons.Filled.Mic)` inside a 36dp `CircleShape` container.
+  - Idle: container = `qbColors.surface`, icon tint = `textMuted`.
+  - Listening: container = `primary.copy(0.15f)`, icon tint = `primary`.
+- Animated dots: `animateFloat(0f → 3.99f, infiniteRepeatable(tween(750), Restart))` → `".".repeat(toInt()+1)`.
+- Ripple: `ripple(color = qbColors.primary, bounded = true)`.
+
+### Result Banner (ResultBanner composable)
+- Layout: `Card(border = 1dp borderColor, elevation = 0)` with a `Row(SpaceBetween)`:
+  - Left: headline ("Correct!" / "Wrong" / "POWER!" / "No buzz"), 22sp ExtraBold.
+  - Right: point delta ("+10" / "-5" / "0"), 28sp ExtraBold. Right-aligned.
+- Colors: `(green, greenDim)` / `(red, redDim)` / `(textMuted, surface2)`.
+- Animation: `slideInVertically(spring(DampingRatioMediumBouncy)) + fadeIn(tween(200))`.
+  - Use `spring` not `tween` for result entrance — physical weight matters here.
+  - Trigger via `var visible by remember { mutableStateOf(false) }; LaunchedEffect(Unit) { visible = true }`.
+- "You said: X" subtitle at 12sp, `textColor.copy(alpha = 0.7f)`, below the row.
+
+### Screen Flash
+- `var flashActive by remember { mutableStateOf(false) }` toggled in `LaunchedEffect(phase)`.
+- `animateFloatAsState(if (flashActive) 0.18f else 0f, tween(400))` → overlay `Box(fillMaxSize, bg = color.copy(flashAlpha))`.
+- Green flash for correct, red for wrong. Alpha 0.18 — perceptible but not blinding.
+- Flash is a `Box` inside the Scaffold content `Box`, rendered last (on top of everything).
+
+### Animation Rules
+| Situation | Spec |
+|---|---|
+| Pulse (idle/buzz waiting) | `infiniteRepeatable(tween(500, FastOutSlowInEasing), Reverse)` |
+| Result entrance | `spring(DampingRatioMediumBouncy, StiffnessMedium)` |
+| Color/border state change | `animateColorAsState(tween(250–300))` — from `androidx.compose.animation` (not `.core`) |
+| Size/width state change | `animateDpAsState(tween(250))` |
+| Simple fade | `tween(200–280)` |
+| Screen flash | `animateFloatAsState(tween(400))` |
+
+### Anti-Patterns (do not use)
+- **No Unicode/emoji as icons** (`←`, `⚙`, `⚡`, `⏸`, `⏩`, `🎤`, `✓`, `✗`). Always `Icon(Icons.*)`.
+- **No gradient borders** (`Modifier.border(width, Brush)`). Adds noise, barely visible on dark bg.
+- **No full-width secondary actions.** Pause, Resume, settings-related secondaries are icon buttons.
+- **No emoji in button labels.** Button shape + color communicates urgency; text conveys the action.
+- **No `Text("  ")` as layout spacer.** Use `Spacer`, `Arrangement.spacedBy`, or `padding`.
+- **No instant background color swap** on state change. Animate with `animateColorAsState`.
+- **No `shadowElevation` inside `graphicsLayer` after `.clip()`** — shadow draws outside bounds, clip removes it.
+- **No `SuggestionChip` for metadata** — overengineered for read-only labels. Use plain `Box + background + Text`.
+
+### Dependencies Required
+`material-icons-extended` must be in `build.gradle.kts`:
+```kotlin
+implementation(libs.androidx.material.icons.extended)
+```
+And in `libs.versions.toml`:
+```toml
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+```
+All icon imports: `import androidx.compose.material.icons.Icons` + specific icon paths.
+
 ## Design Colors (map to Compose theme)
 ```
 Primary:       #7c83ff    Teal:   #2dd4bf    Rose: #f472b6    Amber: #fbbf24
