@@ -4,11 +4,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,12 +20,16 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -83,6 +91,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -156,18 +167,31 @@ fun TossupScreen(navController: NavController) {
     // ── Settings bottom sheet ─────────────────────────────────────────────────
     var showSettings by remember { mutableStateOf(false) }
 
+    // ── Haptic feedback ───────────────────────────────────────────────────────
+    val haptic = LocalHapticFeedback.current
+    LaunchedEffect(result) {
+        val r = result ?: return@LaunchedEffect
+        when {
+            r.points > 0 -> haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            r.points < 0 -> repeat(2) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                delay(120)
+            }
+        }
+    }
+
     // ── Result screen flash ───────────────────────────────────────────────────
     var flashActive by remember { mutableStateOf(false) }
     val isCorrectResult = result != null && result!!.points > 0
     val flashAlpha by animateFloatAsState(
         targetValue = if (flashActive) 0.18f else 0f,
-        animationSpec = tween(400),
+        animationSpec = if (flashActive) tween(80) else tween(500),
         label = "resultFlash",
     )
     LaunchedEffect(phase) {
         if (phase == TossupPhase.RESULT) {
             flashActive = true
-            delay(600)
+            delay(350)
             flashActive = false
         }
     }
@@ -289,31 +313,42 @@ fun TossupScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ── Controls ──────────────────────────────────────────────────
-                PhaseControls(
-                    phase = phase,
-                    loading = loading,
-                    ttsPaused = ttsPaused,
-                    ttsDone = ttsDone,
-                    buzzCountdown = buzzCountdown,
-                    answerCountdown = answerCountdown,
-                    answer = answer,
-                    result = result,
-                    listening = listening,
-                    voiceDisabled = voiceDisabled,
-                    speechSupported = vm.speechSupported,
-                    focusRequester = focusRequester,
-                    settings = settings,
-                    onStart = { vm.fetchTossup() },
-                    onBuzz = { vm.buzz() },
-                    onPause = { vm.pauseTts() },
-                    onResume = { vm.resumeTts() },
-                    onAnswerChange = { vm.updateAnswer(it) },
-                    onDisableVoice = { vm.disableVoiceIfActive() },
-                    onStartVoice = { vm.startVoice() },
-                    onSubmit = { vm.submitAnswer() },
-                    onNext = { vm.fetchTossup() },
-                )
+                // ── Controls (animated on phase change) ───────────────────────
+                AnimatedContent(
+                    targetState = phase,
+                    transitionSpec = {
+                        (fadeIn(tween(200)) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 3 }
+                            togetherWith fadeOut(tween(150)) + slideOutVertically(tween(150)) { -it / 6 })
+                            .using(SizeTransform(clip = false))
+                    },
+                    label = "phaseControls",
+                ) { currentPhase ->
+                    PhaseControls(
+                        phase = currentPhase,
+                        loading = loading,
+                        ttsPaused = ttsPaused,
+                        ttsDone = ttsDone,
+                        buzzCountdown = buzzCountdown,
+                        answerCountdown = answerCountdown,
+                        answer = answer,
+                        result = result,
+                        listening = listening,
+                        voiceDisabled = voiceDisabled,
+                        speechSupported = vm.speechSupported,
+                        focusRequester = focusRequester,
+                        settings = settings,
+                        haptic = haptic,
+                        onStart = { vm.fetchTossup() },
+                        onBuzz = { vm.buzz() },
+                        onPause = { vm.pauseTts() },
+                        onResume = { vm.resumeTts() },
+                        onAnswerChange = { vm.updateAnswer(it) },
+                        onDisableVoice = { vm.disableVoiceIfActive() },
+                        onStartVoice = { vm.startVoice() },
+                        onSubmit = { vm.submitAnswer() },
+                        onNext = { vm.fetchTossup() },
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -470,6 +505,7 @@ private fun PhaseControls(
     speechSupported: Boolean,
     focusRequester: FocusRequester,
     settings: TossupSettings,
+    haptic: HapticFeedback,
     onStart: () -> Unit,
     onBuzz: () -> Unit,
     onPause: () -> Unit,
@@ -522,6 +558,7 @@ private fun PhaseControls(
                         onClick = onBuzz,
                         shouldPulse = ttsDone || buzzCountdown != null,
                         qbColors = qbColors,
+                        haptic = haptic,
                         modifier = Modifier.weight(1f),
                     )
                     // Pause/Resume — small circular icon button
@@ -698,9 +735,20 @@ private fun ResultBanner(
         else -> "${result.points}"
     }
 
+    // Shake card left-right on wrong answer
+    val shakeAnim = remember { Animatable(0f) }
+    LaunchedEffect(isWrong) {
+        if (isWrong) {
+            listOf(10f, -9f, 7f, -5f, 3f, 0f).forEach { target ->
+                shakeAnim.animateTo(target, tween(55))
+            }
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .offset(x = shakeAnim.value.dp)
             .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor),
@@ -789,6 +837,7 @@ private fun BuzzButton(
     onClick: () -> Unit,
     shouldPulse: Boolean,
     qbColors: QuizBowlColors,
+    haptic: HapticFeedback,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "buzzPulse")
@@ -801,21 +850,39 @@ private fun BuzzButton(
         ),
         label = "buzzScale",
     )
-    val appliedScale = if (shouldPulse) pulseScale else 1f
 
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Press squishes down instantly, springs back with bounce
+    val pressScale by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 0.93f
+            shouldPulse -> pulseScale
+            else -> 1f
+        },
+        animationSpec = if (isPressed)
+            spring(stiffness = Spring.StiffnessHigh)
+        else
+            spring(stiffness = Spring.StiffnessMedium, dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "buzzPressScale",
+    )
+
     val buzzGradient = Brush.horizontalGradient(listOf(qbColors.accentTeal, qbColors.primary))
 
     Box(
         modifier = modifier
             .height(72.dp)
-            .scale(appliedScale)
+            .scale(pressScale)
             .clip(RoundedCornerShape(20.dp))
             .background(buzzGradient)
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = Color.White),
-                onClick = onClick,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                },
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -874,6 +941,21 @@ private fun MicCard(
 
     val interactionSource = remember { MutableInteractionSource() }
 
+    // Expanding ring pulse when listening
+    val ringTransition = rememberInfiniteTransition(label = "micRing")
+    val ringScale by ringTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.9f,
+        animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Restart),
+        label = "ringScale",
+    )
+    val ringAlpha by ringTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Restart),
+        label = "ringAlpha",
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -890,19 +972,31 @@ private fun MicCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(if (listening) qbColors.primary.copy(alpha = 0.15f) else qbColors.surface),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Mic,
-                contentDescription = null,
-                tint = if (listening) qbColors.primary else qbColors.textMuted,
-                modifier = Modifier.size(18.dp),
-            )
+        Box(contentAlignment = Alignment.Center) {
+            // Pulsing ring behind icon (only when listening)
+            if (listening) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .scale(ringScale)
+                        .clip(CircleShape)
+                        .background(qbColors.primary.copy(alpha = ringAlpha)),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(if (listening) qbColors.primary.copy(alpha = 0.15f) else qbColors.surface),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Mic,
+                    contentDescription = null,
+                    tint = if (listening) qbColors.primary else qbColors.textMuted,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
         Text(
             text = if (listening) "Listening$dots" else "Tap to speak your answer",

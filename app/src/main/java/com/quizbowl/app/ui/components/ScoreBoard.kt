@@ -1,5 +1,8 @@
 package com.quizbowl.app.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +27,15 @@ fun ScoreBoard(
 ) {
     val qbColors = MaterialTheme.qbColors
 
+    val animatedTotal by animateIntAsState(
+        targetValue = score.total,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow,
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+        ),
+        label = "scoreTotal",
+    )
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -36,7 +49,7 @@ fun ScoreBoard(
             horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(
-                text = score.total.toString(),
+                text = animatedTotal.toString(),
                 fontSize = 30.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = qbColors.accentAmber,
