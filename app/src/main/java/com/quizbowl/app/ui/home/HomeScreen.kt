@@ -3,6 +3,7 @@ package com.quizbowl.app.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -31,6 +32,7 @@ fun HomeScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

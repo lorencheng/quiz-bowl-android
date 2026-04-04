@@ -99,6 +99,7 @@ fun SettingsPanel(
     onSettingsChange: (TossupSettings) -> Unit,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    collapsible: Boolean = true,
 ) {
     val qbColors = MaterialTheme.qbColors
     var expanded by remember { mutableStateOf(initiallyExpanded) }
@@ -127,17 +128,19 @@ fun SettingsPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
+                    .then(if (collapsible) Modifier.clickable { expanded = !expanded } else Modifier)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Settings", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                Text(
-                    text = if (expanded) "▲" else "▼",
-                    fontSize = 11.sp,
-                    color = qbColors.textMuted,
-                )
+                if (collapsible) {
+                    Text(
+                        text = if (expanded) "▲" else "▼",
+                        fontSize = 11.sp,
+                        color = qbColors.textMuted,
+                    )
+                }
             }
 
             // ── Expanded content — scrollable so it never overflows ───────────
@@ -292,6 +295,7 @@ fun BonusSettingsPanel(
     onSettingsChange: (BonusSettings) -> Unit,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    collapsible: Boolean = true,
 ) {
     val qbColors = MaterialTheme.qbColors
     var expanded by remember { mutableStateOf(initiallyExpanded) }
@@ -316,17 +320,19 @@ fun BonusSettingsPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
+                    .then(if (collapsible) Modifier.clickable { expanded = !expanded } else Modifier)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Settings", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                Text(
-                    text = if (expanded) "▲" else "▼",
-                    fontSize = 11.sp,
-                    color = qbColors.textMuted,
-                )
+                if (collapsible) {
+                    Text(
+                        text = if (expanded) "▲" else "▼",
+                        fontSize = 11.sp,
+                        color = qbColors.textMuted,
+                    )
+                }
             }
 
             if (expanded) {

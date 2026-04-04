@@ -377,6 +377,7 @@ fun TossupScreen(navController: NavController) {
                 voices = voices,
                 onSettingsChange = { vm.saveSettings(it) },
                 initiallyExpanded = true,
+                collapsible = false,
                 modifier = Modifier.padding(bottom = 32.dp),
             )
         }
@@ -410,7 +411,7 @@ private fun GameHeader(
         }
         Text(
             text = "TOSSUP",
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 3.sp,
             color = qbColors.primary,
