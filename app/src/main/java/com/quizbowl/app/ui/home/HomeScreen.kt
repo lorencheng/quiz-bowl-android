@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.quizbowl.app.navigation.Screen
-import com.quizbowl.app.ui.theme.AccentAmber
+import com.quizbowl.app.ui.theme.AccentAmber // re-enable with Multiplayer card
 import com.quizbowl.app.ui.theme.AccentRose
 import com.quizbowl.app.ui.theme.AccentTeal
 import androidx.compose.material3.MaterialTheme
@@ -56,12 +56,13 @@ fun HomeScreen(navController: NavController) {
             accentColor = AccentRose,
             onClick = { navController.navigate(Screen.BonusPractice.route) },
         )
-        NavCard(
-            title = "Multiplayer",
-            subtitle = "Join existing qbreader rooms",
-            accentColor = AccentAmber,
-            onClick = { navController.navigate(Screen.Multiplayer.route) },
-        )
+        // Multiplayer hidden — re-enable when ready:
+        // NavCard(
+        //     title = "Multiplayer",
+        //     subtitle = "Join existing qbreader rooms",
+        //     accentColor = AccentAmber,
+        //     onClick = { navController.navigate(Screen.Multiplayer.route) },
+        // )
     }
 }
 
