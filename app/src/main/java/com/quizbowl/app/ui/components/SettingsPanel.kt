@@ -291,9 +291,10 @@ fun BonusSettingsPanel(
     voices: List<Voice>,
     onSettingsChange: (BonusSettings) -> Unit,
     modifier: Modifier = Modifier,
+    initiallyExpanded: Boolean = false,
 ) {
     val qbColors = MaterialTheme.qbColors
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(initiallyExpanded) }
 
     var localRate by remember(settings.rate) { mutableFloatStateOf(settings.rate) }
     var localAnswerTimer by remember(settings.answerTimer) { mutableFloatStateOf(settings.answerTimer) }
