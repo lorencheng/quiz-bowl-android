@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,14 +26,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.quizbowl.app.R
 import com.quizbowl.app.navigation.Screen
 import com.quizbowl.app.ui.theme.AccentAmber // re-enable with Multiplayer card
 import com.quizbowl.app.ui.theme.AccentRose
@@ -66,15 +71,10 @@ fun HomeScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Bolt,
-                    contentDescription = null,
-                    tint = Primary,
-                    modifier = Modifier.size(40.dp),
-                )
+                AppIcon(size = 44)
                 Column {
                     Text(
-                        text = "QuizBowl",
+                        text = "PowerMark",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Primary,
@@ -160,6 +160,31 @@ fun HomeScreen(navController: NavController) {
         //     icon = Icons.Filled.Groups,
         //     onClick = { navController.navigate(Screen.Multiplayer.route) },
         // )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App icon — the asterisk on its gradient background, used in the header
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun AppIcon(size: Int) {
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .clip(RoundedCornerShape((size * 0.22f).dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF9D8FFF), Color(0xFF4A52D4)),
+                ),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.compose.foundation.Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = "PowerMark icon",
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 

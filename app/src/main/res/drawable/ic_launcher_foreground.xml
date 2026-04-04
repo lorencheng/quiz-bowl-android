@@ -5,16 +5,19 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <!--
-        Power mark asterisk (✱) — three overlapping pill shapes at 0°, 60°, 120°.
-        Each pill: 14dp wide × 60dp tall, centered at (54, 54), corners fully rounded (r=7).
-        Path: left side at x=47, right at x=61; top cap center y=31, bottom cap center y=77.
-        Sweep flag 0 (counter-clockwise) draws the outward semicircle caps.
+        Power mark asterisk (✱) rendered as 3 stroke lines through center.
+        Stroke lines are inherently cleaner than filled shapes — the arms are
+        distinct and the center reads as a point, not a blob.
+        Arms span from y=20 to y=88 (68dp), centered at (54,54).
+        strokeLineCap="round" gives the classic rounded-arm asterisk look.
     -->
 
-    <!-- 0° — vertical pill -->
+    <!-- 0° — vertical -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:pathData="M54,33 L54,75"/>
 
     <!-- 60° -->
     <group
@@ -22,8 +25,10 @@
         android:pivotX="54"
         android:pivotY="54">
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="10"
+            android:strokeLineCap="round"
+            android:pathData="M54,33 L54,75"/>
     </group>
 
     <!-- 120° -->
@@ -32,7 +37,9 @@
         android:pivotX="54"
         android:pivotY="54">
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="10"
+            android:strokeLineCap="round"
+            android:pathData="M54,33 L54,75"/>
     </group>
 </vector>

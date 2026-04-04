@@ -101,7 +101,7 @@ fun AboutScreen(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "QuizBowl TTS",
+                            text = "PowerMark",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -160,7 +160,7 @@ fun AboutScreen(navController: NavController) {
 
                     // App description
                     Text(
-                        text = "QuizBowl TTS is a practice app for competitive quiz bowl players. " +
+                        text = "PowerMark is a practice app for competitive quiz bowl players. " +
                             "Questions are read aloud word-by-word using text-to-speech, and " +
                             "answers can be spoken or typed.",
                         fontSize = 14.sp,
