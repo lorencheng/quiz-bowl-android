@@ -4,8 +4,35 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Circle centered at (54,54) radius 26 — primary purple #7C83FF -->
+    <!--
+        Power mark asterisk (✱) — three overlapping pill shapes at 0°, 60°, 120°.
+        Each pill: 14dp wide × 60dp tall, centered at (54, 54), corners fully rounded (r=7).
+        Path: left side at x=47, right at x=61; top cap center y=31, bottom cap center y=77.
+        Sweep flag 0 (counter-clockwise) draws the outward semicircle caps.
+    -->
+
+    <!-- 0° — vertical pill -->
     <path
-        android:fillColor="#7C83FF"
-        android:pathData="M80,54 A26,26 0 1,1 28,54 A26,26 0 1,1 80,54 Z"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+
+    <!-- 60° -->
+    <group
+        android:rotation="60"
+        android:pivotX="54"
+        android:pivotY="54">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+    </group>
+
+    <!-- 120° -->
+    <group
+        android:rotation="120"
+        android:pivotX="54"
+        android:pivotY="54">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M47,31 A7,7 0,0,0 61,31 L61,77 A7,7 0,0,0 47,77 Z"/>
+    </group>
 </vector>

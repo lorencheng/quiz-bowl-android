@@ -39,6 +39,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -72,6 +73,9 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // Play In-App Review
+    implementation(libs.play.review.ktx)
 
     // Testing
     testImplementation(libs.junit)

@@ -5,7 +5,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.quizbowl.app.ui.bonus.BonusScreen
+import com.quizbowl.app.ui.home.AboutScreen
 import com.quizbowl.app.ui.home.HomeScreen
+import com.quizbowl.app.ui.home.WhatsNewScreen
 import com.quizbowl.app.ui.multiplayer.MultiplayerScreen
 import com.quizbowl.app.ui.tossup.TossupScreen
 
@@ -14,6 +16,8 @@ sealed class Screen(val route: String) {
     data object TossupPractice : Screen("practice/tossup")
     data object BonusPractice : Screen("practice/bonus")
     data object Multiplayer : Screen("multiplayer")
+    data object About : Screen("about")
+    data object WhatsNew : Screen("whats_new")
 }
 
 @Composable
@@ -35,6 +39,12 @@ fun NavGraph() {
         }
         composable(Screen.Multiplayer.route) {
             MultiplayerScreen(navController = navController)
+        }
+        composable(Screen.About.route) {
+            AboutScreen(navController = navController)
+        }
+        composable(Screen.WhatsNew.route) {
+            WhatsNewScreen(navController = navController)
         }
     }
 }

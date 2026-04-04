@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">QuizBowl TTS</string>
+    <!-- Legacy — kept for any remaining references -->
+    <string name="app_name">PowerMark</string>
+    <!-- Full name: used on Play Store and indexed by OS search -->
+    <string name="app_full_name">PowerMark: Quiz Bowl Voice</string>
+    <!-- Short name: displayed under the home screen icon -->
+    <string name="app_launcher_label">PowerMark</string>
 </resources>
