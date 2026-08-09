@@ -8,6 +8,7 @@ import com.quizbowl.app.api.QbReaderService
 import com.quizbowl.app.api.models.Tossup
 import com.quizbowl.app.data.SettingsRepository
 import com.quizbowl.app.data.TossupSettings
+import com.quizbowl.app.engine.SoundEffects
 import com.quizbowl.app.engine.SpeechEngine
 import com.quizbowl.app.engine.TtsEngine
 import com.quizbowl.app.util.TossupScore
@@ -205,6 +206,16 @@ class TossupViewModel(application: Application) : AndroidViewModel(application) 
     /** Submit the current answer (or the supplied text override). */
     fun submitAnswer(answerText: String = _answer.value) {
         if (_phase.value != TossupPhase.BUZZING || answerText.isBlank()) return
+        submitAnswerCandidates(listOf(answerText))
+    }
+
+    /**
+     * Try each candidate in order against the API and accept the first one that returns
+     * "accept" or "prompt". Falls back to the first candidate's result if all reject.
+     * Used for voice input where the top STT result may be a homophone of the answer.
+     */
+    private fun submitAnswerCandidates(candidates: List<String>) {
+        if (candidates.isEmpty()) return
         if (!submitting.compareAndSet(false, true)) return
         cancelAnswerTimer()
         destroySpeech()
@@ -212,19 +223,27 @@ class TossupViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val t = _tossup.value ?: return@launch
                 val expectedAnswer = t.answerSanitized ?: t.answer
-                val res = QbReaderService.checkAnswer(answerText.trim(), expectedAnswer)
-                val directive = res.directive
-                val points = calcTossupPoints(directive, _powerIndex.value, _buzzIndex.value)
+                var usedAnswer = candidates.first()
+                var res = QbReaderService.checkAnswer(usedAnswer, expectedAnswer)
+                for (candidate in candidates.drop(1)) {
+                    if (res.directive == "accept" || res.directive == "prompt") break
+                    delay(50)
+                    usedAnswer = candidate
+                    res = QbReaderService.checkAnswer(candidate, expectedAnswer)
+                }
+                if (res.directive == "accept") _answer.value = usedAnswer
+                val points = calcTossupPoints(res.directive, _powerIndex.value, _buzzIndex.value)
                 _result.value = TossupResult(
-                    directive = directive,
+                    directive = res.directive,
                     directedPrompt = res.directedPrompt,
                     points = points,
                     isPower = points == 15,
-                    userAnswer = answerText.trim(),
+                    userAnswer = usedAnswer,
                 )
-                if (directive != "prompt") {
+                if (res.directive != "prompt") {
                     _score.value = _score.value.update(points)
                     _phase.value = TossupPhase.RESULT
+                    if (points > 0) SoundEffects.playCorrect() else if (points < 0) SoundEffects.playWrong()
                 }
             } catch (e: Exception) {
                 _error.value = "Failed to check answer: ${e.message}"
@@ -325,10 +344,10 @@ class TossupViewModel(application: Application) : AndroidViewModel(application) 
                     _answer.value = text
                 }
             },
-            onFinalResult = { text ->
-                if (_phase.value == TossupPhase.BUZZING) {
-                    _answer.value = text
-                    submitAnswer(text)
+            onFinalResults = { alternatives ->
+                if (_phase.value == TossupPhase.BUZZING && alternatives.isNotEmpty()) {
+                    _answer.value = alternatives.first()
+                    submitAnswerCandidates(alternatives)
                 }
             },
         )

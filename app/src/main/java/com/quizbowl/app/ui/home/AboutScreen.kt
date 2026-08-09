@@ -160,9 +160,7 @@ fun AboutScreen(navController: NavController) {
 
                     // App description
                     Text(
-                        text = "PowerMark is a practice app for competitive quiz bowl players. " +
-                            "Questions are read aloud word-by-word using text-to-speech, and " +
-                            "answers can be spoken or typed.",
+                        text = "A quiz bowl trainer built for voice — hear every clue, answer with your voice, just like at a tournament.",
                         fontSize = 14.sp,
                         color = qbColors.textMuted,
                         lineHeight = 22.sp,

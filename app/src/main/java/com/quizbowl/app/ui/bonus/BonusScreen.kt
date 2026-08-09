@@ -108,6 +108,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.quizbowl.app.data.BonusSettings
+import com.quizbowl.app.data.RotatingTextRepository
 import com.quizbowl.app.ui.components.BonusSettingsPanel
 import com.quizbowl.app.ui.theme.QuizBowlColors
 import com.quizbowl.app.ui.theme.qbColors
@@ -164,6 +165,14 @@ fun BonusScreen(navController: NavController) {
 
     // ── Settings bottom sheet ─────────────────────────────────────────────────
     var showSettings by remember { mutableStateOf(false) }
+
+    // ── Idle hint (rotates each time we return to IDLE) ───────────────────────
+    var idleHint by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(phase) {
+        if (phase == BonusPhase.IDLE) {
+            idleHint = RotatingTextRepository.nextIdleHint(context)
+        }
+    }
 
     // ── Haptic feedback on part result ────────────────────────────────────────
     val haptic = LocalHapticFeedback.current
@@ -317,12 +326,14 @@ fun BonusScreen(navController: NavController) {
                                         modifier = Modifier.fillMaxSize(),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        Text(
-                                            text = "Tap Start to begin",
-                                            color = qbColors.textMuted,
-                                            fontSize = 16.sp,
-                                            textAlign = TextAlign.Center,
-                                        )
+                                        if (idleHint != null) {
+                                            Text(
+                                                text = idleHint!!,
+                                                color = qbColors.textMuted,
+                                                fontSize = 16.sp,
+                                                textAlign = TextAlign.Center,
+                                            )
+                                        }
                                     }
                                 }
 
@@ -334,12 +345,14 @@ fun BonusScreen(navController: NavController) {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                text = "Tap Start to begin",
-                                color = qbColors.textMuted,
-                                fontSize = 16.sp,
-                                textAlign = TextAlign.Center,
-                            )
+                            if (idleHint != null) {
+                                Text(
+                                    text = idleHint!!,
+                                    color = qbColors.textMuted,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
                         }
                     }
                 }

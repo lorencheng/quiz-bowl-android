@@ -8,6 +8,7 @@ import com.quizbowl.app.api.QbReaderService
 import com.quizbowl.app.api.models.Bonus
 import com.quizbowl.app.data.BonusSettings
 import com.quizbowl.app.data.SettingsRepository
+import com.quizbowl.app.engine.SoundEffects
 import com.quizbowl.app.engine.SpeechEngine
 import com.quizbowl.app.engine.TtsEngine
 import com.quizbowl.app.util.BonusScore
@@ -172,9 +173,14 @@ class BonusViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun submitAnswer(answerText: String = _answer.value) {
+        if (answerText.isBlank()) return
+        submitAnswerCandidates(listOf(answerText))
+    }
+
+    private fun submitAnswerCandidates(candidates: List<String>) {
+        if (candidates.isEmpty()) return
         val phase = _phase.value
         if (phase != BonusPhase.ANSWERING && phase != BonusPhase.PROMPTING) return
-        if (answerText.isBlank()) return
         if (!submitting.compareAndSet(false, true)) return
         val isFromPrompt = (phase == BonusPhase.PROMPTING)
         cancelAnswerTimer()
@@ -184,10 +190,17 @@ class BonusViewModel(application: Application) : AndroidViewModel(application) {
                 val b = _bonus.value ?: return@launch
                 val part = _currentPart.value
                 val expectedAnswer = b.answersSanitized?.getOrNull(part) ?: b.answers.getOrNull(part) ?: ""
-                val res = QbReaderService.checkAnswer(answerText.trim(), expectedAnswer)
+                var usedAnswer = candidates.first()
+                var res = QbReaderService.checkAnswer(usedAnswer, expectedAnswer)
+                for (candidate in candidates.drop(1)) {
+                    if (res.directive == "accept" || res.directive == "prompt") break
+                    delay(50)
+                    usedAnswer = candidate
+                    res = QbReaderService.checkAnswer(candidate, expectedAnswer)
+                }
+                if (res.directive == "accept") _answer.value = usedAnswer
                 when {
                     res.directive == "prompt" && !isFromPrompt -> {
-                        // Surface the prompt — let user re-answer (no nested prompting)
                         _directedPrompt.value = res.directedPrompt
                         _answer.value = ""
                         _voiceDisabled.value = false
@@ -200,11 +213,12 @@ class BonusViewModel(application: Application) : AndroidViewModel(application) {
                         val newResults = _partResults.value + PartResult(
                             correct = correct,
                             points = points,
-                            userAnswer = answerText.trim(),
+                            userAnswer = usedAnswer,
                         )
                         _partResults.value = newResults
                         _directedPrompt.value = null
                         _phase.value = BonusPhase.PART_RESULT
+                        if (correct) SoundEffects.playCorrect() else SoundEffects.playWrong()
                         schedulePartAdvance(newResults)
                     }
                 }
@@ -322,11 +336,11 @@ class BonusViewModel(application: Application) : AndroidViewModel(application) {
                     _answer.value = text
                 }
             },
-            onFinalResult = { text ->
+            onFinalResults = { alternatives ->
                 val p = _phase.value
-                if (p == BonusPhase.ANSWERING || p == BonusPhase.PROMPTING) {
-                    _answer.value = text
-                    submitAnswer(text)
+                if ((p == BonusPhase.ANSWERING || p == BonusPhase.PROMPTING) && alternatives.isNotEmpty()) {
+                    _answer.value = alternatives.first()
+                    submitAnswerCandidates(alternatives)
                 }
             },
         )

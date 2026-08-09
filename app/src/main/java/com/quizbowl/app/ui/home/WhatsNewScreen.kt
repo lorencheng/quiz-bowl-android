@@ -43,7 +43,7 @@ private val CHANGELOG = listOf(
         version = "v1.0",
         date = "April 2026",
         bullets = listOf(
-            "Tossup practice with word-by-word TTS",
+            "Hear tossups read aloud, word by word — just like at a tournament.",
             "Bonus practice with 3-part questions",
             "Voice answer recognition — speak your answer hands-free",
             "Answer timer with animated countdown",

@@ -16,22 +16,16 @@ import kotlinx.coroutines.flow.asStateFlow
  *
  * - Call start() from a user gesture (Button onClick) — required on Android.
  * - Shows interim results via onInterimResult callback.
- * - Calls onFinalResult when the user pauses speaking.
+ * - Calls onFinalResult with the top match when the user pauses speaking.
+ * - Calls onFinalResults with up to 5 alternatives — use these when the top match
+ *   may be a homophone of the correct answer (e.g. "pie" vs "pi").
  * - Call stop() to cancel recognition (e.g., when user starts typing).
- *
- * Usage:
- *   val speech = SpeechEngine(context,
- *       onInterimResult = { text -> ... },
- *       onFinalResult = { text -> ... }
- *   )
- *   speech.start()   // in Button onClick
- *   speech.stop()
- *   speech.destroy() // in onDestroy
  */
 class SpeechEngine(
     private val context: Context,
     private val onInterimResult: (String) -> Unit = {},
     private val onFinalResult: (String) -> Unit = {},
+    private val onFinalResults: (List<String>) -> Unit = {},
 ) {
 
     private val _listening = MutableStateFlow(false)
@@ -43,35 +37,28 @@ class SpeechEngine(
 
     fun start() {
         if (!supported) return
-        stop() // Clean up any existing instance
+        stop()
 
         recognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    _listening.value = true
-                }
-
+                override fun onReadyForSpeech(params: Bundle?) { _listening.value = true }
                 override fun onBeginningOfSpeech() {}
-
                 override fun onRmsChanged(rmsdB: Float) {}
-
                 override fun onBufferReceived(buffer: ByteArray?) {}
-
-                override fun onEndOfSpeech() {
-                    _listening.value = false
-                }
+                override fun onEndOfSpeech() { _listening.value = false }
 
                 override fun onError(error: Int) {
                     _listening.value = false
-                    // SpeechRecognizer.ERROR_NO_MATCH and ERROR_SPEECH_TIMEOUT are expected
                 }
 
                 override fun onResults(results: Bundle?) {
                     _listening.value = false
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    val text = matches?.firstOrNull() ?: return
-                    onInterimResult(text)
-                    onFinalResult(text.trim())
+                    if (matches.isNullOrEmpty()) return
+                    val primary = matches.first().trim()
+                    onInterimResult(primary)
+                    onFinalResult(primary)
+                    onFinalResults(matches.map { it.trim() })
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {
@@ -87,7 +74,7 @@ class SpeechEngine(
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
 
             startListening(intent)
@@ -101,7 +88,5 @@ class SpeechEngine(
         _listening.value = false
     }
 
-    fun destroy() {
-        stop()
-    }
+    fun destroy() { stop() }
 }

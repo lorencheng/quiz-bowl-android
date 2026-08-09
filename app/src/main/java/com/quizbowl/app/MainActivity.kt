@@ -1,35 +1,28 @@
 package com.quizbowl.app
 
-import android.content.Context
-import android.content.Intent
+import android.graphics.Bitmap
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.CompositionLocalProvider
+import com.quizbowl.app.data.FeedbackManager
+import com.quizbowl.app.data.LocalFeedbackManager
 import com.quizbowl.app.navigation.NavGraph
+import com.quizbowl.app.ui.feedback.FeedbackSheet
 import com.quizbowl.app.ui.theme.QuizBowlTheme
-import com.quizbowl.app.ui.theme.qbColors
 import com.quizbowl.app.util.ShakeDetector
-
-private const val FEEDBACK_URL = "https://feedback.example.com"  // TODO: replace with real URL
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var sensorManager: SensorManager
     private lateinit var shakeDetector: ShakeDetector
-    private val showShakeDialog = mutableStateOf(false)
+    private val feedbackManager = FeedbackManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,22 +30,26 @@ class MainActivity : ComponentActivity() {
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         shakeDetector = ShakeDetector(
-            onShake = { runOnUiThread { showShakeDialog.value = true } },
+            onShake = {
+                runOnUiThread {
+                    captureScreenshot { bitmap ->
+                        feedbackManager.open(bitmap)
+                    }
+                }
+            },
         )
 
         setContent {
             QuizBowlTheme {
-                NavGraph()
+                CompositionLocalProvider(LocalFeedbackManager provides feedbackManager) {
+                    NavGraph()
 
-                // Shake feedback dialog — composited on top of everything
-                if (showShakeDialog.value) {
-                    ShakeFeedbackDialog(
-                        onFeedback = {
-                            showShakeDialog.value = false
-                            openUrl(this, FEEDBACK_URL)
-                        },
-                        onDismiss = { showShakeDialog.value = false },
-                    )
+                    if (feedbackManager.isOpen.value) {
+                        FeedbackSheet(
+                            screenshot = feedbackManager.screenshot.value,
+                            onDismiss = { feedbackManager.dismiss() },
+                        )
+                    }
                 }
             }
         }
@@ -69,44 +66,16 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         sensorManager.unregisterListener(shakeDetector)
     }
-}
 
-@Composable
-private fun ShakeFeedbackDialog(
-    onFeedback: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val qbColors = MaterialTheme.qbColors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Filled.BugReport,
-                contentDescription = null,
-                tint = qbColors.accentAmber,
-            )
-        },
-        title = { Text("Hit a snag?") },
-        text = {
-            Text(
-                text = "Shake detected — want to send feedback?",
-                color = qbColors.textMuted,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onFeedback) {
-                Text("Send Feedback", color = qbColors.primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Dismiss", color = qbColors.textMuted)
-            }
-        },
-        containerColor = qbColors.surface,
-    )
-}
-
-private fun openUrl(context: Context, url: String) {
-    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    private fun captureScreenshot(callback: (Bitmap?) -> Unit) {
+        val decorView = window.decorView
+        if (decorView.width == 0 || decorView.height == 0) {
+            callback(null)
+            return
+        }
+        val bitmap = Bitmap.createBitmap(decorView.width, decorView.height, Bitmap.Config.ARGB_8888)
+        PixelCopy.request(window, bitmap, { result ->
+            callback(if (result == PixelCopy.SUCCESS) bitmap else null)
+        }, Handler(Looper.getMainLooper()))
+    }
 }

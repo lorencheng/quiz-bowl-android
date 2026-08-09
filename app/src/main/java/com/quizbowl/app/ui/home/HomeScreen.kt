@@ -2,8 +2,6 @@ package com.quizbowl.app.ui.home
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +18,7 @@ import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.quizbowl.app.R
+import com.quizbowl.app.data.LocalFeedbackManager
+import com.quizbowl.app.data.RotatingTextRepository
 import com.quizbowl.app.navigation.Screen
 import com.quizbowl.app.ui.theme.AccentAmber // re-enable with Multiplayer card
 import com.quizbowl.app.ui.theme.AccentRose
@@ -45,14 +46,20 @@ import com.quizbowl.app.ui.theme.AccentTeal
 import com.quizbowl.app.ui.theme.Primary
 import com.quizbowl.app.ui.theme.qbColors
 
-private const val FEEDBACK_URL = "https://feedback.example.com"  // TODO: replace with real URL
-private const val PLAY_STORE_APP_ID = "com.quizbowl.app"         // TODO: replace with real app ID
+private const val PLAY_STORE_APP_ID = "com.quizbowl.app"         // TODO: replace with real app ID once published
 
 @Composable
 fun HomeScreen(navController: NavController) {
     val colors = MaterialTheme.qbColors
     val context = LocalContext.current
+    val feedbackManager = LocalFeedbackManager.current
     var menuExpanded by remember { mutableStateOf(false) }
+    var tossupSubtitle by remember { mutableStateOf("") }
+    var bonusSubtitle by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        tossupSubtitle = RotatingTextRepository.nextTossupSubtitle(context)
+        bonusSubtitle = RotatingTextRepository.nextBonusSubtitle(context)
+    }
 
     Column(
         modifier = Modifier
@@ -80,7 +87,7 @@ fun HomeScreen(navController: NavController) {
                         color = Primary,
                     )
                     Text(
-                        text = "Text-to-speech practice",
+                        text = "Buzz faster. Score higher.",
                         fontSize = 13.sp,
                         color = colors.textMuted,
                     )
@@ -121,7 +128,7 @@ fun HomeScreen(navController: NavController) {
                         leadingIcon = { Icon(Icons.Filled.Feedback, contentDescription = null) },
                         onClick = {
                             menuExpanded = false
-                            openUrl(context, FEEDBACK_URL)
+                            feedbackManager.open()
                         },
                     )
                     DropdownMenuItem(
@@ -140,14 +147,14 @@ fun HomeScreen(navController: NavController) {
 
         NavCard(
             title = "Tossup Practice",
-            subtitle = "Practice tossups with questions read aloud",
+            subtitle = tossupSubtitle,
             accentColor = AccentTeal,
             icon = Icons.Filled.Bolt,
             onClick = { navController.navigate(Screen.TossupPractice.route) },
         )
         NavCard(
             title = "Bonus Practice",
-            subtitle = "Practice bonuses with questions read aloud",
+            subtitle = bonusSubtitle,
             accentColor = AccentRose,
             icon = Icons.Filled.GridView,
             onClick = { navController.navigate(Screen.BonusPractice.route) },
@@ -200,10 +207,6 @@ private fun triggerInAppReview(context: Context) {
             manager.launchReviewFlow(activity, task.result)
         }
     }
-}
-
-private fun openUrl(context: Context, url: String) {
-    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
